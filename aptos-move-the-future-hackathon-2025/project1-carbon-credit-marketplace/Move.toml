@@ -1,0 +1,25 @@
+[package]
+name = "CarbonCreditMarketplace"
+version = "1.0.0"
+authors = ["Move the Future Hackathon Team"]
+
+[addresses]
+carbon_marketplace = "_"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-core.git"
+rev = "mainnet"
+subdir = "aptos-move/framework/aptos-framework"
+
+[dependencies.AptosStdlib]
+git = "https://github.com/aptos-labs/aptos-core.git"
+rev = "mainnet"
+subdir = "aptos-move/framework/aptos-stdlib"
+
+[dependencies.AptosTokenObjects]
+git = "https://github.com/aptos-labs/aptos-core.git"
+rev = "mainnet"
+subdir = "aptos-move/framework/aptos-token-objects"
+
+[dev-addresses]
+carbon_marketplace = "0x7a5aae256bdcecc0b3fa2286408a2128ec58154159e0ea051ab871905f322e5b"

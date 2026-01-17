@@ -1,0 +1,355 @@
+;;; ==========================================================================
+;;; Token Smart Contract Test Suite
+;;; ==========================================================================
+;;; Run with: pact token.repl
+;;; ==========================================================================
+
+;; Set up the testing environment
+(begin-tx "Setup environment")
+(env-data {
+  "token-admin-keyset": { "keys": ["admin-key"], "pred": "keys-all" },
+  "alice-keyset": { "keys": ["alice-key"], "pred": "keys-all" },
+  "bob-keyset": { "keys": ["bob-key"], "pred": "keys-all" },
+  "charlie-keyset": { "keys": ["charlie-key"], "pred": "keys-all" },
+  "init": true
+})
+
+;; Define namespace
+(define-namespace "free" (read-keyset "token-admin-keyset") (read-keyset "token-admin-keyset"))
+(commit-tx)
+
+;; Load the token contract
+(begin-tx "Load token module")
+(env-data {
+  "token-admin-keyset": { "keys": ["admin-key"], "pred": "keys-all" },
+  "init": true
+})
+(env-keys ["admin-key"])
+(load "token.pact")
+(commit-tx)
+
+;; ==========================================================================
+;; Test 1: Initialize Token
+;; ==========================================================================
+(begin-tx "Test 1: Initialize token metadata")
+(env-keys ["admin-key"])
+
+;; Initialize the token with name, symbol, and decimals
+(expect
+  "Token initialization succeeds"
+  "Token SimpleToken (STK) initialized with 18 decimals"
+  (free.simple-token.init-token "SimpleToken" "STK" 18)
+)
+
+;; Verify token info
+(expect "Token name is correct" "SimpleToken" (free.simple-token.get-name))
+(expect "Token symbol is correct" "STK" (free.simple-token.get-symbol))
+(expect "Token decimals is correct" 18 (free.simple-token.get-decimals))
+(expect "Initial total supply is 0" 0.0 (free.simple-token.get-total-supply))
+
+(commit-tx)
+
+;; ==========================================================================
+;; Test 2: Create Accounts
+;; ==========================================================================
+(begin-tx "Test 2: Create accounts")
+(env-data {
+  "alice-keyset": { "keys": ["alice-key"], "pred": "keys-all" },
+  "bob-keyset": { "keys": ["bob-key"], "pred": "keys-all" }
+})
+
+;; Create Alice's account
+(expect
+  "Alice account creation succeeds"
+  "Account alice created"
+  (free.simple-token.create-account "alice" (read-keyset "alice-keyset"))
+)
+
+;; Create Bob's account
+(expect
+  "Bob account creation succeeds"
+  "Account bob created"
+  (free.simple-token.create-account "bob" (read-keyset "bob-keyset"))
+)
+
+;; Verify accounts exist
+(expect "Alice account exists" true (free.simple-token.account-exists "alice"))
+(expect "Bob account exists" true (free.simple-token.account-exists "bob"))
+(expect "Charlie account does not exist" false (free.simple-token.account-exists "charlie"))
+
+;; Verify initial balances
+(expect "Alice initial balance is 0" 0.0 (free.simple-token.get-balance "alice"))
+(expect "Bob initial balance is 0" 0.0 (free.simple-token.get-balance "bob"))
+
+(commit-tx)
+
+;; ==========================================================================
+;; Test 3: Mint Tokens
+;; ==========================================================================
+(begin-tx "Test 3: Mint tokens to accounts")
+(env-keys ["admin-key"])
+
+;; Mint tokens to Alice
+(expect
+  "Mint to Alice succeeds"
+  "Minted 1000.0 tokens to alice"
+  (free.simple-token.mint "alice" 1000.0)
+)
+
+;; Verify Alice balance
+(expect "Alice balance after mint" 1000.0 (free.simple-token.get-balance "alice"))
+
+;; Verify total supply increased
+(expect "Total supply after mint" 1000.0 (free.simple-token.get-total-supply))
+
+;; Mint more tokens to Bob
+(expect
+  "Mint to Bob succeeds"
+  "Minted 500.0 tokens to bob"
+  (free.simple-token.mint "bob" 500.0)
+)
+
+;; Verify Bob balance
+(expect "Bob balance after mint" 500.0 (free.simple-token.get-balance "bob"))
+
+;; Verify total supply
+(expect "Total supply after both mints" 1500.0 (free.simple-token.get-total-supply))
+
+(commit-tx)
+
+;; ==========================================================================
+;; Test 4: Transfer Tokens
+;; ==========================================================================
+(begin-tx "Test 4: Transfer tokens between accounts")
+(env-keys ["alice-key"])
+
+;; Alice transfers to Bob
+(expect
+  "Alice to Bob transfer succeeds"
+  "Transferred 100.0 tokens from alice to bob"
+  (free.simple-token.transfer "alice" "bob" 100.0)
+)
+
+;; Verify balances after transfer
+(expect "Alice balance after transfer" 900.0 (free.simple-token.get-balance "alice"))
+(expect "Bob balance after transfer" 600.0 (free.simple-token.get-balance "bob"))
+
+;; Total supply should not change on transfer
+(expect "Total supply unchanged after transfer" 1500.0 (free.simple-token.get-total-supply))
+
+(commit-tx)
+
+;; ==========================================================================
+;; Test 5: Transfer Create (create account on transfer)
+;; ==========================================================================
+(begin-tx "Test 5: Transfer-create to new account")
+(env-keys ["alice-key"])
+(env-data {
+  "charlie-keyset": { "keys": ["charlie-key"], "pred": "keys-all" }
+})
+
+;; Alice transfers to Charlie (creates account)
+(expect
+  "Transfer-create to Charlie succeeds"
+  "Transferred 200.0 tokens from alice to charlie (created if new)"
+  (free.simple-token.transfer-create "alice" "charlie" (read-keyset "charlie-keyset") 200.0)
+)
+
+;; Verify balances
+(expect "Alice balance after transfer-create" 700.0 (free.simple-token.get-balance "alice"))
+(expect "Charlie balance after transfer-create" 200.0 (free.simple-token.get-balance "charlie"))
+(expect "Charlie account now exists" true (free.simple-token.account-exists "charlie"))
+
+(commit-tx)
+
+;; ==========================================================================
+;; Test 6: Burn Tokens
+;; ==========================================================================
+(begin-tx "Test 6: Burn tokens")
+(env-keys ["admin-key"])
+
+;; Burn tokens from Bob's account
+(expect
+  "Burn from Bob succeeds"
+  "Burned 100.0 tokens from bob"
+  (free.simple-token.burn "bob" 100.0)
+)
+
+;; Verify Bob's balance decreased
+(expect "Bob balance after burn" 500.0 (free.simple-token.get-balance "bob"))
+
+;; Verify total supply decreased
+(expect "Total supply after burn" 1400.0 (free.simple-token.get-total-supply))
+
+(commit-tx)
+
+;; ==========================================================================
+;; Test 7: Guard Enforcement (should fail)
+;; ==========================================================================
+(begin-tx "Test 7: Unauthorized transfer should fail")
+(env-keys ["bob-key"])  ;; Bob tries to transfer Alice's tokens
+
+;; This should fail because Bob doesn't have Alice's key
+(expect-failure
+  "Unauthorized transfer fails"
+  (free.simple-token.transfer "alice" "bob" 50.0)
+)
+
+(commit-tx)
+
+;; ==========================================================================
+;; Test 8: Insufficient Balance (should fail)
+;; ==========================================================================
+(begin-tx "Test 8: Transfer with insufficient balance should fail")
+(env-keys ["bob-key"])
+
+;; Bob tries to transfer more than he has
+(expect-failure
+  "Insufficient balance transfer fails"
+  (free.simple-token.transfer "bob" "alice" 10000.0)
+)
+
+(commit-tx)
+
+;; ==========================================================================
+;; Test 9: Negative Amount (should fail)
+;; ==========================================================================
+(begin-tx "Test 9: Negative transfer amount should fail")
+(env-keys ["alice-key"])
+
+(expect-failure
+  "Negative transfer amount fails"
+  (free.simple-token.transfer "alice" "bob" -50.0)
+)
+
+(commit-tx)
+
+;; ==========================================================================
+;; Test 10: Self Transfer (should fail)
+;; ==========================================================================
+(begin-tx "Test 10: Self transfer should fail")
+(env-keys ["alice-key"])
+
+(expect-failure
+  "Self transfer fails"
+  (free.simple-token.transfer "alice" "alice" 50.0)
+)
+
+(commit-tx)
+
+;; ==========================================================================
+;; Test 11: Mint-Create (create account during mint)
+;; ==========================================================================
+(begin-tx "Test 11: Mint-create to new account")
+(env-keys ["admin-key"])
+(env-data {
+  "dave-keyset": { "keys": ["dave-key"], "pred": "keys-all" }
+})
+
+;; Mint to Dave (creates account)
+(expect
+  "Mint-create to Dave succeeds"
+  "Minted 300.0 tokens to dave (created if new)"
+  (free.simple-token.mint-create "dave" (read-keyset "dave-keyset") 300.0)
+)
+
+;; Verify Dave's balance
+(expect "Dave balance after mint-create" 300.0 (free.simple-token.get-balance "dave"))
+(expect "Dave account exists" true (free.simple-token.account-exists "dave"))
+
+;; Verify total supply
+(expect "Total supply after mint-create" 1700.0 (free.simple-token.get-total-supply))
+
+(commit-tx)
+
+;; ==========================================================================
+;; Test 12: Rotate Guard
+;; ==========================================================================
+(begin-tx "Test 12: Rotate account guard")
+(env-keys ["alice-key"])
+(env-data {
+  "alice-new-keyset": { "keys": ["alice-new-key"], "pred": "keys-all" }
+})
+
+;; Alice rotates her guard
+(expect
+  "Guard rotation succeeds"
+  "Guard rotated for account alice"
+  (free.simple-token.rotate-guard "alice" (read-keyset "alice-new-keyset"))
+)
+
+(commit-tx)
+
+;; Verify old key no longer works for transfer
+(begin-tx "Test 12b: Old key should not work after rotation")
+(env-keys ["alice-key"])  ;; Old key
+
+(expect-failure
+  "Transfer with old key fails after rotation"
+  (free.simple-token.transfer "alice" "bob" 10.0)
+)
+
+(commit-tx)
+
+;; Verify new key works
+(begin-tx "Test 12c: New key should work after rotation")
+(env-keys ["alice-new-key"])  ;; New key
+
+(expect
+  "Transfer with new key succeeds"
+  "Transferred 10.0 tokens from alice to bob"
+  (free.simple-token.transfer "alice" "bob" 10.0)
+)
+
+(commit-tx)
+
+;; ==========================================================================
+;; Test 13: Non-Admin Cannot Mint
+;; ==========================================================================
+(begin-tx "Test 13: Non-admin cannot mint")
+(env-keys ["bob-key"])
+
+(expect-failure
+  "Non-admin mint fails"
+  (free.simple-token.mint "bob" 1000.0)
+)
+
+(commit-tx)
+
+;; ==========================================================================
+;; Test 14: Non-Admin Cannot Burn
+;; ==========================================================================
+(begin-tx "Test 14: Non-admin cannot burn")
+(env-keys ["bob-key"])
+
+(expect-failure
+  "Non-admin burn fails"
+  (free.simple-token.burn "bob" 100.0)
+)
+
+(commit-tx)
+
+;; ==========================================================================
+;; Final Summary
+;; ==========================================================================
+(begin-tx "Final balance summary")
+
+(print "")
+(print "=================================================")
+(print "           FINAL TEST SUMMARY")
+(print "=================================================")
+(print (format "Token Name: {}" [(free.simple-token.get-name)]))
+(print (format "Token Symbol: {}" [(free.simple-token.get-symbol)]))
+(print (format "Token Decimals: {}" [(free.simple-token.get-decimals)]))
+(print (format "Total Supply: {}" [(free.simple-token.get-total-supply)]))
+(print "")
+(print "Account Balances:")
+(print (format "  Alice:   {}" [(free.simple-token.get-balance "alice")]))
+(print (format "  Bob:     {}" [(free.simple-token.get-balance "bob")]))
+(print (format "  Charlie: {}" [(free.simple-token.get-balance "charlie")]))
+(print (format "  Dave:    {}" [(free.simple-token.get-balance "dave")]))
+(print "=================================================")
+(print "All tests completed successfully!")
+(print "=================================================")
+
+(commit-tx)
