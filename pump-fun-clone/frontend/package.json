@@ -1,0 +1,49 @@
+{
+  "name": "pump-fun-clone",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@solana/wallet-adapter-base": "^0.9.23",
+    "@solana/wallet-adapter-react": "^0.15.35",
+    "@solana/wallet-adapter-react-ui": "^0.9.35",
+    "@solana/wallet-adapter-wallets": "^0.19.32",
+    "@solana/web3.js": "^1.91.8",
+    "@tanstack/react-query": "^5.37.1",
+    "autoprefixer": "^10.4.19",
+    "axios": "^1.7.2",
+    "browserify-zlib": "^0.2.0",
+    "clsx": "^2.1.1",
+    "crypto-browserify": "^3.12.1",
+    "date-fns": "^3.6.0",
+    "framer-motion": "^11.2.4",
+    "https-browserify": "^1.0.0",
+    "lucide-react": "^0.379.0",
+    "next": "14.2.3",
+    "postcss": "^8.4.38",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hot-toast": "^2.4.1",
+    "recharts": "^2.12.7",
+    "socket.io-client": "^4.7.5",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss": "^3.4.3",
+    "url": "^0.11.4",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@types/react": "^18.3.2",
+    "@types/react-dom": "^18.3.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.3",
+    "typescript": "^5.4.5"
+  }
+}

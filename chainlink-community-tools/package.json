@@ -1,0 +1,31 @@
+{
+  "name": "chainlink-community-tools",
+  "version": "1.0.0",
+  "description": "Community tools for Chainlink - CCIP, VRF, Price Feeds, Automation",
+  "main": "src/index.js",
+  "scripts": {
+    "ccip-estimate": "node src/ccip-fee-estimator.js",
+    "price-monitor": "node src/price-feed-monitor.js",
+    "vrf-manager": "node src/vrf-subscription-manager.js",
+    "automation-health": "node src/automation-health-checker.js",
+    "start": "node src/index.js"
+  },
+  "keywords": [
+    "chainlink",
+    "ccip",
+    "vrf",
+    "price-feeds",
+    "automation",
+    "web3"
+  ],
+  "author": "pranay123-stack",
+  "license": "MIT",
+  "dependencies": {
+    "ethers": "^6.9.0",
+    "dotenv": "^16.3.1",
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.3",
+    "inquirer": "^8.2.6",
+    "axios": "^1.6.2"
+  }
+}

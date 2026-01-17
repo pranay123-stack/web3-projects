@@ -1,0 +1,643 @@
+Master list of UniV3 forks:
+
+  0. UniswapV3
+  1. PancakeSwapV3
+  2. SushiSwapV3
+  3. SolidlyV3
+  4. Velodrome/Aerodrome Slipstream
+  5. CamelotV3/QuickSwapV3 (Algebra-like)
+  6. AlienBaseV3
+  7. BaseX
+  8. SwapBasedV3
+  9. Thruster
+  10. BladeSwap (Algebra-like)
+  11. Fenix (Algebra-like)
+  12. ZebraV3
+  13. Lynex (Algebra-like)
+  14. DackieSwapV3
+  15. Thick
+  16. KinetixV3
+  17. MetavaultV3
+  18. BlasterV3
+  19. MonoSwapV3
+  20. RogueXV1
+  21. SupSwapV3
+  22. Kim (Algebra-like)
+  23. SwapMode
+  24. Swapsicle (Algebra-like)
+  25. Panko
+  26. Swapr (Algebra-like)
+  27. SpookySwap
+  28. Wagmi
+  29. SwapX (Algebra-like)
+  30. KodiakV3
+  31. Bulla Exchange (Algebra-like)
+  32. KittenSwap (factory is upgradeable; pools are not)
+  33. Hybra
+  34. HyperSwap
+  35. Velodrome/Aerodrome Slipstream V3.1
+  36. AboreanCL
+
+---
+
+## [Unreleased]
+
+### Breaking changes
+
+### Non-breaking changes
+
+## 2025-12-29
+
+### Breaking changes
+
+* Update Settler on Ethereum and Base to the Osaka hardfork
+* The address `0xbbbbbBB520d69a9775E85b458C58c648259FAD5F` (Bebop) is now on the
+  list of restricted targets for the `BASIC` action for the following chains:
+  * Arbitrum
+  * Avalanche
+  * Base
+  * Bnb
+  * Ethereum mainnet
+  * Optimism
+  * Polygon
+  * HyperEvm
+
+### Non-breaking changes
+
+* Fix bug that was causing bad revert reason for expired `AllowanceHolder`
+  trades.
+* Add `BEBOP` action for 3rd-party RFQ provider Bebop. This action has special
+  functionality that binds the actual taker of the RFQ order (`_msgSender()`) to
+  the order itself to allow market makers better opportunity to screen takers as
+  well as normalizing the representation of the event emitted for RFQ orders
+  between the `RFQ` action and Bebop. This action is added on the following
+  chains:
+  * Arbitrum
+  * Avalanche
+  * Base
+  * Bnb
+  * Ethereum mainnet
+  * Optimism
+  * Polygon
+  * HyperEvm
+
+## 2025-12-17
+
+### Breaking changes
+
+* Update Linea chain to Cancun hardfork (AllowanceHolder is now
+  `0x0000000000001fF3684f28c67538d4D072C22734`)
+
+### Non-breaking changes
+
+* Add `BRIDGE_ERC20_TO_ACROSS` and `BRIDGE_NATIVE_TO_ACROSS` to Plasma
+* Add `BRIDGE_ERC20_TO_ACROSS` and `BRIDGE_NATIVE_TO_ACROSS` to HyperEVM
+* Fix bug that was sending un-settleable native asset dust via OFT,
+  causing reverts.
+* Fix bug in HyperEvm BridgeSettler that was causing spurious reverts.
+
+## 2025-12-15
+
+### Non-breaking changes
+
+* Deploy Settler and BridgeSettler to Abstract mainnet chain
+  * Add UniswapV3 UniswapV3 fork to Abstract chain
+  * Add Aborean UniswapV3 fork to Abstract chain
+
+## 2025-12-03
+
+### Breaking changes
+
+* Removed BridgeSettler action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` in favor of
+  `BRIDGE_TO_LAYER_ZERO_OFT` that accepts ERC20 and Native tokens.
+* Changes for price impact caps on tick-based AMMs
+  * Modified `MAVERICKV2` and `MAVERICKV2_VIP` to include `tickLimit` as a parameter
+  * Modified fills of UniV4, PancakeInfinity and Ekubo to include `priceSqrt`
+  * Modified UniV3 `encodedPath` to include `priceSqrt`
+
+### Non-breaking changes
+
+* Add Aerodrome Slipstream V3.1 UniswapV3 fork to Base
+* Add `LFJTM` action for Let's F***ing Joe Token Mill V2 on Monad mainnet chain
+* Update the BridgeSettler Across actions `BRIDGE_NATIVE_TO_ACROSS` and
+  `BRIDGE_ERC20_TO_ACROSS` to use a different underlying function: `deposit`
+  (`0xad5425c6`) instead of `depositV3` (`0x7b939232`)
+* Add new Renegade action `RENEGADE` to supported chains:
+  * Add action `RENEGADE` to Arbitrum
+  * Add action `RENEGADE` to Base
+* Added `UNDERPAYMENT_CHECK` action to `BridgeSettlerBase`.
+* Added another set of 60 solvers whitelisted on the `SettlerIntent` instances
+
+## 2025-11-24
+
+### Non-breaking changes
+
+* Deploy Settler to Monad mainnet
+  * Add BalancerV3 actions (`BALANCERV3`, `BALANCERV3_VIP`, and
+    `METATXN_BALANCERV3_VIP`) to Monad mainnet
+  * Add UniswapV4 actions to Monad mainnet
+  * Add PancakeSwapV3 UniV3 fork to Monad mainnet
+  * Add UniswapV3 UniV3 fork on Monad mainnet
+
+## 2025-11-11
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Add support for EraVM chains
+* Deploy Settler to Abstract Sepolia chain
+  * Add UniswapV3 UniV3 fork to Abstract Sepolia
+
+## 2025-10-02
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Add BalancerV3 actions (`BALANCERV3`, `BALANCERV3_VIP`, and
+  `METATXN_BALANCERV3_VIP`) to Sonic
+
+## 2025-09-29
+
+### Breaking changes
+
+* Added `psm` and `dai` as arguments to Settler `MAKERPSM` action to allow
+  interacting with `LitePSM/DAI` or `SkyPSM/USDS`.
+* `POSITIVE_SLIPPAGE` takes a `maxBps` argument to cap the amount of slippage
+  taken as a proportion of the buy amount
+
+### Non-breaking changes
+
+* Add `EULERSWAP` action to Plasma
+* Add `NATIVE_CHECK` action to Mainnet
+
+## 2025-09-15
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Deploy Settler to Plasma chain
+  * Add UniswapV3 UniV3 fork on Plasma
+  * Add BalancerV3 actions (`BALANCERV3`, `BALANCERV3_VIP`, and
+    `METATXN_BALANCERV3_VIP`) to Plasma
+
+## 2025-09-03
+
+### Breaking changes
+
+* Update Scroll to the Cancun hardfork
+
+### Non-breaking changes
+
+* Add `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` for remaining supported chains:
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Berachain
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Blast
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to HyperEvm
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Ink
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Katana
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Linea
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Mode
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Scroll
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Sepolia
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Taiko
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Unichain
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to WorldChain
+* Add new DeBridge action `BRIDGE_TO_DEBRIDGE` to supported chains:
+  * Add action `BRIDGE_TO_DEBRIDGE` to Arbitrum
+  * Add action `BRIDGE_TO_DEBRIDGE` to Avalanche
+  * Add action `BRIDGE_TO_DEBRIDGE` to Base
+  * Add action `BRIDGE_TO_DEBRIDGE` to Berachain
+  * Add action `BRIDGE_TO_DEBRIDGE` to Bnb
+  * Add action `BRIDGE_TO_DEBRIDGE` to Gnosis
+  * Add action `BRIDGE_TO_DEBRIDGE` to HyperEvm
+  * Add action `BRIDGE_TO_DEBRIDGE` to Linea
+  * Add action `BRIDGE_TO_DEBRIDGE` to Mainnet
+  * Add action `BRIDGE_TO_DEBRIDGE` to Mantle
+  * Add action `BRIDGE_TO_DEBRIDGE` to Optimism
+  * Add action `BRIDGE_TO_DEBRIDGE` to Polygon
+  * Add action `BRIDGE_TO_DEBRIDGE` to Sonic
+* Added new DeBridge action `BRIDGE_TO_DEBRIDGE`
+
+## 2025-08-18
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Add new LayerZero action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to `BridgeSettlerBase`
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Mainnet
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Base
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Arbitrum
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Avalanche
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Bnb
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Gnosis
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Mantle
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Optimism
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Polygon
+  * Add action `BRIDGE_ERC20_TO_LAYER_ZERO_OFT` to Sonic
+
+## 2025-08-11
+
+### Breaking changes
+
+* In metatransactions and intents, it is now an error for `_operator()` (the gas
+  payer/solver/relayer) to be `msgSender` (the taker)
+* Remove `LimitOrderFeeCollector`
+
+### Non-breaking changes
+
+* Add `NATIVE_CHECK` to taker-submitted Settlers on all chains to correctly
+  handle the selling of the chain-native asset
+* Add PancakeSwap Infinity actions (`PANCAKE_INFINITY`, `PANCAKE_INFINITY_VIP`,
+  and `METATXN_PANCAKE_INFINITY_VIP`) on Base
+* Improve gas efficiency and accuracy of `EULERSWAP` action
+* Add solvency check for EulerSwap (does not execute on-chain)
+* Add `CrossChainReceiverFactory`, a minimal proxy factory inspired by submarine
+  transactions for "automatically" swapping any tokens received
+* Add `BridgeSettler` to all supported chains except `MonadTestnet`
+  * `BridgeSettler` is the settlement contracts for cross-chain operations
+    and is heavily implemented following `Settler` design.
+  * `BridgeSettlerBase` implements actions for:
+    * `BASIC`, same as `Settler`
+    * `SETTLER_SWAP`, to execute swaps on `Settler`
+    * Relay bridge integration (`BRIDGE_ERC20_TO_RELAY`, `BRIDGE_NATIVE_TO_RELAY`)
+    * Those are available in the `BridgeSettler` of every chain
+  * Other actions added that are not supported in every chain:
+    * Mayan bridge integration (`BRIDGE_ERC20_TO_MAYAN`, `BRIDGE_NATIVE_TO_MAYAN`)
+    * Across bridge integration
+      (`BRIDGE_ERC20_TO_ACROSS`, `BRIDGE_NATIVE_TO_ACROSS`)
+    * StargateV2 bridge integration
+      (`BRIDGE_ERC20_TO_STARGATE_V2`, `BRIDGE_NATIVE_TO_STARGATE_V2`)
+
+## 2025-08-01
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Deploy a stripped-down suite of Settlers to Katana network
+
+## 2025-07-07
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Deploy Settler to HyperEVM (Hyperliquid) network
+  * Add KittenSwap UniV3 fork to HyperEVM
+  * Add Hybra UniV3 fork to HyperEVM
+  * Add HyperSwap UniV3 fork to HyperEVM
+
+## 2025-07-02
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Remove Safe{Wallet} API configuration from Blast
+* Configure Safe{Wallet} API on Berachain
+* Add EulerSwap action `EULERSWAP`
+  * Add `EULERSWAP` action to Mainnet
+  * Add `EULERSWAP` action to Base
+  * Add `EULERSWAP` action to Bnb
+  * Add `EULERSWAP` action to Sonic
+  * Add `EULERSWAP` action to Avalanche
+  * Add `EULERSWAP` action to Unichain
+  * Add `EULERSWAP` action to Berachain
+
+## 2025-06-16
+
+### Breaking changes
+
+* `METATXN_RFQ_VIP` action is removed from all chains
+
+### Non-breaking changes
+
+* Add BalancerV3 actions (`BALANCERV3`, `BALANCERV3_VIP`, and
+  `METATXN_BALANCERV3_VIP`) to Optimism
+* Add support for Ekubo forwarding extensions by setting the top bit of `bps`
+
+## 2025-04-25
+
+### Breaking changes
+
+* `RFQ_VIP` action is removed from all chains
+* `CURVE_TRICRYPTO_VIP` and `METATXN_CURVE_TRICRYPTO_VIP` actions are removed
+  from Mainnet (they remain available on Arbitrum)
+* `VELODROME` action is removed from Mainnet (it remains as default on all other
+  chains)
+* The Ekubo actions (`EKUBO`, `EKUBO_VIP`, and `METATXN_EKUBO_VIP`) `fills` no
+  longer has a `skipAhead` argument. Each fill is 32 bytes shorter. The field is
+  now hardcoded to zero.
+
+### Non-breaking changes
+
+* Replace `rebateClaimer()(address)` address (previously the `Deployer` owner
+  multisig; varies by chain) with a constant EOA owned by ZeroEx Inc
+* Add actions for Ekubo
+  * `EKUBO`, `EKUBO_VIP`, and `METATXN_EKUBO_VIP`
+  * See comments in [Ekubo.sol](src/core/Ekubo.sol) regarding how to encode
+    `fills`
+* Fix a bug in the BalancerV3 action resulting in incorrect decoding of callback
+  returndata
+* Add BalancerV3 actions (`BALANCERV3`, `BALANCERV3_VIP`, and
+  `METATXN_BALANCERV3_VIP`) to Avalanche
+* Add BalancerV3 actions (`BALANCERV3`, `BALANCERV3_VIP`, and
+  `METATXN_BALANCERV3_VIP`) to Gnosis
+* Add actions for PancakeSwap Infinity
+  * `PANCAKE_INFINITY`, `PANCAKE_INFINITY_VIP`, and `METATXN_PANCAKE_INFINITY_VIP`
+  * See comments in [PancakeInfinity.sol](src/core/PancakeInfinity.sol)
+    regarding how to encode `fills`. While there are many similarities with
+    UniswapV4 and BalancerV3, additional complexity is added because there are 2
+    different default/built-in CFAMM schemes in PancakeSwap Infinity.
+* Add PancakeSwap Infinity actions (`PANCAKE_INFINITY`, `PANCAKE_INFINITY_VIP`,
+  and `METATXN_PANCAKE_INFINITY_VIP`) on Bnb chain
+
+## 2025-03-11
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Create new Settler version for intent-based settlement -- the taker only signs
+  the slippage, not the actions
+  * This is now `tokenId` 4
+
+## 2025-02-20
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Add UniswapV3 UniV3 fork to Monad Testnet
+
+## 2025-02-12
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Deploy Settler to Unichain network
+  * Add UniswapV3 UniV3 fork to Unichain
+  * Add UniswapV4 actions to Unichain
+* Deploy Settler to Berachain network
+  * Add KodiakV3 UniV3 fork to Berachain
+  * Add Bulla Exchange UniV3 (Algebra style) fork to Berachain
+* Add UniswapV4 actions to Sepolia
+* Add UniswapV4 actions to Ink
+* Add BalancerV3 actions to Base
+* Add BalancerV3 actions to Arbitrum
+
+## 2025-01-23
+
+### Breaking changes
+
+* Remove `gemToken` and `psm` arguments from `MAKERPSM` action
+  * This specializes and gas optimizes the action for the Lite PSM
+    (0xf6e72Db5454dd049d0788e411b06CfAF16853042)
+* `TRANSFER_FROM` is now a "VIP" action. It can only be executed as the first
+  action of a swap
+* Update Avalanche to the Cancun hardfork
+  * This means that the AllowanceHolder address on Avalanche is now 0x0000000000001fF3684f28c67538d4D072C22734
+
+### Non-breaking changes
+
+* Add actions for UniswapV4
+  * `UNISWAPV4`, `UNISWAPV4_VIP`, and `METATXN_UNISWAPV4_VIP`
+  * See comments in [UniswapV4.sol](src/core/UniswapV4.sol) regarding how to
+    encode `fills`
+  * See comments in
+    [FlashAccountingCommon.sol](src/core/FlashAccountingCommon.sol) regarding
+    how to compute a perfect token hash function
+* Add UniswapV4 actions to:
+  * Mainnet
+  * Arbitrum
+  * Avalanche
+  * Base
+  * Blast
+  * Bnb
+  * Optimism
+  * Polygon
+  * WorldChain
+* Add `msgSender()(address)` accessor on Base to retrieve the current taker
+* Improve accuracy, gas, and convergence region coverage in SolidlyV1/VelodromeV2 action (`VELODROME`)
+* Add DodoV1 actions to more chains
+  * Add `DODOV1` action to Arbitrum
+  * Add `DODOV1` action to Bnb
+  * Add `DODOV1` action to Linea
+  * Add `DODOV1` action to Mantle
+  * Add `DODOV1` action to Polygon
+  * Add `DODOV1` action to Scroll
+* Add `rebateClaimer()(address)` function on Mainnet Settlers for gas rebate program
+* Add SolidlyV3 UniV3 fork to Sonic
+* Add Wagmi UniV3 fork to Sonic
+* Add SwapX UniV3 (Algebra style) fork to Sonic
+* Add actions for BalancerV3
+  * `BALANCERV3`, `BALANCERV3_VIP`, and `METATXN_BALANCERV3_VIP`
+  * See comments in [BalancerV3.sol](src/core/BalancerV3.sol) regarding how to
+    encode `fills`
+  * See comments in
+    [FlashAccountingCommon.sol](src/core/FlashAccountingCommon.sol) regarding
+    how to compute a perfect token hash function
+
+## 2025-01-09
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Deploy Settler to Monad testnet chain
+
+## 2024-12-18
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Deploy Settler to Ink chain
+  * Add UniswapV3 UniV3 fork to Ink
+
+## 2024-12-14
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Deploy Settler to Fantom Sonic network
+  * Add UniswapV3 UniV3 fork to Sonic
+  * Add SpookySwap UniV3 fork to Sonic
+
+## 2024-12-12
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Deploy Settler to Taiko network
+  * Add UniswapV3 UniV3 fork to Taiko
+  * Add Swapsicle UniV3 (Algebra style) fork to Taiko
+  * Add Panko UniV3 fork to Taiko
+* Deploy Settler to World Chain network
+  * Add UniswapV3 UniV3 fork to World Chain
+  * Add DackieSwapV3 UniV3 fork to World Chain
+* Deploy Settler to Gnosis chain
+  * Add UniswapV3 UniV3 fork to Gnosis
+  * Add SushiswapV3 UniV3 fork to Gnosis
+  * Add Swapr UniV3 (Algebra style) fork to Gnosis
+
+## 2024-10-08
+
+### Breaking changes
+
+### Non-breaking changes
+
+* Add `DODOV2` Dodo V2 action on Mantle
+* Deploy Settler to Mode network
+  * Add SupSwapV3 UniV3 fork to Mode
+  * Add Kim UniV3 (Algebra style) fork to Mode
+  * Add SwapModeV3 UniV3 fork to Mode
+
+## 2024-09-09
+
+### Breaking changes
+
+* Upgrade Bnb chain deployment to Cancun (Tycho) hardfork
+  * This changes the `AllowanceHolder` address on that chain to
+    `0x0000000000001fF3684f28c67538d4D072C22734`
+
+### Non-breaking changes
+
+* Add BlasterV3 UniV3 fork to Blast
+* Add MonoSwapV3 UniV3 fork to Blast
+* Add RogueXV1 UniV3 fork to Blast
+  * This UniV3 fork has unusual integrations with perpetual futures; it may
+    revert when a "normal" UniV3 fork wouldn't
+
+## 2024-08-26
+
+### Breaking changes
+
+* Add slippage check parameter to `MAKERPSM` action to gas-optimize the new "lite" PSM
+  * Note that for the "normal" PSM ("MCD PSM USDC A",
+    0x89B78CfA322F6C5dE0aBcEecab66Aee45393cC5A), `amountOutMin` _**MUST**_ be
+    zeroed, otherwise you will get an out-of-gas
+* Special case a permitted (sell) amount of `type(uint256).max - 9_999` and
+  above -- this introspects the taker's balance of the sell token and attempts
+  to sell a proportion of it
+
+### Non-breaking changes
+
+* Added `prev` accessor function to `Deployer`
+* Configure yield and gas for Deployer on Blast
+* Deploy Settler to Mantle network
+* Add `DODOV2` action to Arbitrum
+* Add SolidlyV3 UniV3 fork to Arbitrum
+
+## 2024-08-12
+
+### Breaking changes
+
+* Remove DodoV1 from all chains except Mainnet
+  * Remove `DODOV1` action from Arbitrum
+  * Remove `DODOV1` action from Avalanche
+  * Remove `DODOV1` action from Base
+  * Remove `DODOV1` action from Blast
+  * Remove `DODOV1` action from Bnb
+  * Remove `DODOV1` action from Linea
+  * Remove `DODOV1` action from Optimism
+  * Remove `DODOV1` action from Polygon
+  * Remove `DODOV1` action from Scroll
+  * Remove `DODOV1` action from Sepolia
+  * (`DODOV1` action remains available on Mainnet)
+
+### Non-breaking changes
+
+* Arbiscan's "Cancun" issue has been fixed -- verify Settler on Arbiscan
+* Link to 0x's Immunefi bug bounty page from `README.md`
+* Add UniswapV3 UniV3 fork to Scroll
+* Add new actions `MAVERICKV2`, `MAVERICKV2_VIP`, and `METATXN_MAVERICKV2_VIP`
+  * Add MaverickV2 to Mainnet
+  * Add MaverickV2 to Base
+  * Add MaverickV2 to Arbitrum
+  * Add MaverickV2 to Bnb
+  * Add MaverickV2 to Scroll
+  * Add MaverickV2 to Sepolia
+* Add DackieSwapV3 UniV3 fork
+  * Add DackieSwapV3 to Arbitrum
+  * Add DackieSwapV3 to Base
+  * Add DackieSwapV3 to Blast (new inithash)
+  * Add DackieSwapV3 to Optimism
+* Add Thick UniV3 fork to Base
+* Add KinetixV3 UniV3 fork to Base
+* Add new action `DODOV2`
+  * Add DodoV2 to Avalanche
+  * Add DodoV2 to Base
+  * Add DodoV2 to Bnb
+  * Add DodoV2 to Mainnet
+  * Add DodoV2 to Polygon
+  * Add DodoV2 to Scroll
+* Add MetavaultV3 UniV3 fork to Scroll
+* Add SushiswapV3 UniV3 fork to more chains
+  * Add SushiswapV3 to Arbitrum
+  * Add SushiswapV3 to Mainnet
+  * Add SushiswapV3 to Optimism
+* Add `prev` view function to `Deployer`
+
+## 2024-07-29
+
+* Configure Blast gas fee claims on Settler deployment
+* Change Settler's `AllowanceHolder` integration to use `return` to signal non-ERC20 compliance (rather than `revert`)
+  * `AllowanceHolder`'s own signal still uses `revert`, but this will only come up rarely
+* Flatten Settler source files before deployment for ease of verification
+* All chains redeployed to pick up above changes
+
+## 2024-07-18
+
+* Deployed Settler to Linea
+* Added Lynex Algebra-style UniV3 fork to Linea
+* Update Velodrome Slipstream factory address (and inithash) to migrated one
+* Bug! Fixed wrong slippage actual value in `UNISWAPV2` action
+
+## 2024-07-15
+
+* Deployed Settler to Blast
+* Added Thruster UniV3 fork to Blast
+* Added BladeSwap Algebra-style UniV3 fork to Blast
+* Added Fenix Algebra-style UniV3 fork to Blast
+* Deployed Settler to Scroll
+* Added ZebraV3 UniV3 fork to Scroll
+* Added SolidlyV3 UniV3 fork to Base
+* Added SwapBasedV3 UniV3 fork to Base
+* Added support for `DODOV1` action to all chains
+* Added support for `VELODROME` action to all chains
+
+## 2024-06-27
+
+* Add SushiswapV3 UniV3 fork to Polygon
+* Added support for `DODOV1` action on Bnb
+* Added support for `DODOV1` action on Polygon
+
+## 2024-06-10
+
+* Added extra anonymous argument to `execute` and `executeMetaTxn` for tracking
+  zid and affiliate address
+* Add SolidlyV3 UniV3 fork to Optimism
+* Added support for `DODOV1` action on Arbitrum
+
+## 2024-06-05
+
+* The actions `MAKERPSM_SELL` and `MAKERPSM_BUY` actions have been combined into
+  a single `MAKERPSM` action with a `buyGem` boolean flag
+* Add support for AlgebraSwap-style UniV3 forks (single pool per token pair)
+  * When using the UniV3 actions for an AlgebraSwap-style pool, the fee
+    tier/pool ID must be passed as 0
+* Add CamelotV3 AlgebraSwap-style UniV3 fork to Arbitrum
+* Add QuickSwapV3 AlebraSwap-style UniV3 fork to Polygon
+* Added support for `CURVE_TRICRYPTO_VIP` and `METATXN_CURVE_TRICRYPTO_VIP` on
+  Arbitrum
+* Bug! Fixed BNB Chain PancakeSwapV3 deployer address (it's the same as on all
+  other chains)
+* Added PancakeSwapV3 to Arbitrum UniV3 VIP
+* Added BaseX to Base UniV3 VIP

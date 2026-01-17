@@ -1,0 +1,625 @@
+================================================================================
+                    DEFI LENDING PROTOCOL - COMPLETE ARCHITECTURE
+================================================================================
+
+Author: Pranay
+Created: December 2025
+Blockchain: Ethereum (Sepolia Testnet)
+Framework: Foundry (Solidity 0.8.20)
+Live Deployment: https://sepolia.etherscan.io/address/0x211e6A6d182dE6Bcc3C49b876Cb159E235017f80
+
+================================================================================
+                              PROJECT OVERVIEW
+================================================================================
+
+This is a production-quality decentralized lending protocol inspired by
+Compound and Aave. Users can:
+
+  1. SUPPLY assets to earn interest
+  2. BORROW against their collateral
+  3. REPAY borrowed amounts
+  4. WITHDRAW supplied assets
+  5. LIQUIDATE undercollateralized positions (earn 5% bonus)
+
+Key DeFi Concepts Implemented:
+  - Collateralized borrowing (75% collateral factor)
+  - Dynamic interest rates based on utilization (Jump Rate Model)
+  - Health factor tracking (liquidation below 1.0)
+  - Multi-asset support (WETH, USDC, DAI)
+  - Share-based accounting for fair interest distribution
+
+================================================================================
+                            FOLDER STRUCTURE
+================================================================================
+
+defi-lending-protocol/
+│
+├── src/                          # SMART CONTRACTS
+│   ├── LendingPool.sol           # Main protocol (supply, borrow, liquidate)
+│   ├── InterestRateModel.sol     # Jump rate interest calculations
+│   ├── PriceOracle.sol           # Chainlink-compatible price feeds
+│   │
+│   ├── interfaces/               # Contract interfaces
+│   │   ├── ILendingPool.sol      # LendingPool interface
+│   │   ├── IInterestRateModel.sol# Interest model interface
+│   │   └── IPriceOracle.sol      # Oracle interface
+│   │
+│   ├── libraries/                # Utility libraries
+│   │   └── WadMath.sol           # Fixed-point math (18 decimals)
+│   │
+│   └── mocks/                    # Test tokens
+│       └── MockERC20.sol         # ERC20 with mint function
+│
+├── test/                         # TEST FILES
+│   ├── LendingPool.t.sol         # 29 unit tests
+│   └── LendingPool.fuzz.t.sol    # 8 fuzz + 2 invariant tests
+│
+├── script/                       # DEPLOYMENT
+│   └── Deploy.s.sol              # Deployment script
+│
+├── lib/                          # DEPENDENCIES
+│   ├── forge-std/                # Foundry standard library
+│   └── openzeppelin-contracts/   # OpenZeppelin security libs
+│
+├── broadcast/                    # DEPLOYMENT LOGS
+│   └── Deploy.s.sol/11155111/    # Sepolia deployment transactions
+│
+├── .github/workflows/            # CI/CD
+│   └── ci.yml                    # GitHub Actions pipeline
+│
+├── foundry.toml                  # Foundry configuration
+├── .env.sepolia                  # Deployed contract addresses
+├── README.md                     # Documentation
+└── PROJECT_ARCHITECTURE.txt      # This file
+
+================================================================================
+                          SMART CONTRACT DETAILS
+================================================================================
+
+------------------------------------------------------------------------------
+1. LendingPool.sol (Main Contract - ~600 lines)
+------------------------------------------------------------------------------
+
+Location: src/LendingPool.sol
+Purpose: Core protocol logic for all lending operations
+
+INHERITANCE:
+  ├── ReentrancyGuard  (OpenZeppelin) - Prevents reentrancy attacks
+  ├── Pausable         (OpenZeppelin) - Emergency stop mechanism
+  ├── Ownable          (OpenZeppelin) - Admin controls
+  └── ILendingPool     (Interface)    - Contract interface
+
+STATE VARIABLES:
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ Variable                │ Type              │ Purpose                   │
+  ├─────────────────────────┼───────────────────┼───────────────────────────┤
+  │ markets                 │ mapping(address   │ Market configuration      │
+  │                         │   => Market)      │ (rates, factors, etc.)    │
+  │ userAccounts            │ mapping(address   │ User positions            │
+  │                         │   => mapping)     │ (supplied, borrowed)      │
+  │ isCollateralEnabled     │ mapping(address   │ Collateral toggles        │
+  │                         │   => mapping)     │                           │
+  │ interestRateModel       │ IInterestRateModel│ Interest calculator       │
+  │ priceOracle             │ IPriceOracle      │ Price feed                │
+  └─────────────────────────┴───────────────────┴───────────────────────────┘
+
+STRUCTS:
+
+  Market {
+    bool isListed;              // Is market active?
+    uint256 collateralFactor;   // 0.75e18 = 75% borrow power
+    uint256 liquidationThreshold; // 0.80e18 = liquidate at 80%
+    uint256 liquidationBonus;   // 1.05e18 = 5% liquidator bonus
+    uint256 reserveFactor;      // 0.10e18 = 10% protocol fee
+    uint256 totalSupply;        // Total tokens supplied
+    uint256 totalBorrows;       // Total tokens borrowed
+    uint256 supplyIndex;        // Interest accumulator (supply)
+    uint256 borrowIndex;        // Interest accumulator (borrow)
+    uint256 lastUpdateTime;     // Last interest accrual
+  }
+
+  UserAccount {
+    uint256 supplied;           // User's supply shares
+    uint256 borrowed;           // User's borrow balance
+    uint256 borrowIndex;        // User's borrow index snapshot
+  }
+
+MAIN FUNCTIONS:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ Function        │ Description                                          │
+  ├─────────────────┼──────────────────────────────────────────────────────┤
+  │ supply()        │ Deposit tokens to earn interest                      │
+  │                 │ - Transfers tokens from user to pool                 │
+  │                 │ - Mints supply shares to user                        │
+  │                 │ - Auto-enables as collateral                         │
+  │                 │                                                      │
+  │ withdraw()      │ Remove supplied tokens                               │
+  │                 │ - Burns supply shares                                │
+  │                 │ - Checks health factor remains >= 1                  │
+  │                 │ - Transfers tokens back to user                      │
+  │                 │                                                      │
+  │ borrow()        │ Take a loan against collateral                       │
+  │                 │ - Checks sufficient collateral                       │
+  │                 │ - Checks sufficient pool liquidity                   │
+  │                 │ - Updates borrow balance with current index          │
+  │                 │ - Transfers tokens to borrower                       │
+  │                 │                                                      │
+  │ repay()         │ Pay back borrowed tokens                             │
+  │                 │ - Transfers tokens from user to pool                 │
+  │                 │ - Reduces borrow balance                             │
+  │                 │ - Caps at actual debt (returns excess)               │
+  │                 │                                                      │
+  │ liquidate()     │ Liquidate unhealthy position                         │
+  │                 │ - Checks health factor < 1                           │
+  │                 │ - Repays up to 50% of debt (close factor)            │
+  │                 │ - Seizes collateral + 5% bonus                       │
+  │                 │ - Transfers collateral to liquidator                 │
+  └─────────────────┴──────────────────────────────────────────────────────┘
+
+HELPER FUNCTIONS:
+
+  _accrueInterest(token)     - Compound interest since last update
+  _enterMarket(user, token)  - Add market to user's active markets
+  _calculateWithdrawShares() - Convert token amount to shares
+
+  _validateAndCalculateLiquidation() - Validate liquidation params
+  _calculateSeizeTokens()    - Calculate collateral to seize
+  _executeLiquidation()      - Execute the liquidation transfers
+
+VIEW FUNCTIONS:
+
+  getSupplyBalance(user, token)   - User's supplied amount
+  getBorrowBalance(user, token)   - User's debt (with interest)
+  getHealthFactor(user)           - User's health (>1 = safe)
+  getAccountLiquidity(user)       - (collateral, debt) values
+  getUtilizationRate(token)       - Pool utilization (borrows/supply)
+  isHealthy(user)                 - Quick health check
+
+ADMIN FUNCTIONS:
+
+  listMarket()       - Add new token market
+  pause() / unpause() - Emergency controls
+  withdrawReserves() - Withdraw protocol fees
+
+------------------------------------------------------------------------------
+2. InterestRateModel.sol (~80 lines)
+------------------------------------------------------------------------------
+
+Location: src/InterestRateModel.sol
+Purpose: Calculate dynamic interest rates based on utilization
+
+JUMP RATE MODEL:
+
+  Interest
+  Rate (%)                           /
+     ^                              /
+     │                             /  <- Jump Rate (100%/year slope)
+     │                            /
+     │              ─────────────/    <- Kink at 80% utilization
+     │             /
+     │            /  <- Base Rate (10%/year slope)
+     │           /
+     │          /
+     │    ─────/
+     │   / <- 2% Base
+     └──────────────────────────────> Utilization (%)
+         0%       80%         100%
+                 (optimal)
+
+PARAMETERS:
+  ┌──────────────────┬─────────────┬────────────────────────────────────────┐
+  │ Parameter        │ Value       │ Description                            │
+  ├──────────────────┼─────────────┼────────────────────────────────────────┤
+  │ baseRate         │ 2% / year   │ Minimum borrow rate                    │
+  │ multiplier       │ 10% / year  │ Slope below optimal utilization        │
+  │ jumpMultiplier   │ 100% / year │ Steep slope above optimal              │
+  │ optimalUtilization│ 80%        │ Target utilization (kink point)        │
+  └──────────────────┴─────────────┴────────────────────────────────────────┘
+
+FORMULAS:
+
+  If utilization <= 80%:
+    borrowRate = baseRate + (utilization × multiplier)
+
+  If utilization > 80%:
+    normalRate = baseRate + (80% × multiplier)
+    excessUtil = utilization - 80%
+    borrowRate = normalRate + (excessUtil × jumpMultiplier)
+
+  supplyRate = borrowRate × utilization × (1 - reserveFactor)
+
+EXAMPLE RATES:
+  ┌─────────────────┬────────────────┬──────────────────┐
+  │ Utilization     │ Borrow APY     │ Supply APY       │
+  ├─────────────────┼────────────────┼──────────────────┤
+  │ 0%              │ 2%             │ 0%               │
+  │ 50%             │ 7%             │ 3.15%            │
+  │ 80% (optimal)   │ 10%            │ 7.2%             │
+  │ 90%             │ 20%            │ 16.2%            │
+  │ 100%            │ 30%            │ 27%              │
+  └─────────────────┴────────────────┴──────────────────┘
+
+------------------------------------------------------------------------------
+3. PriceOracle.sol (~100 lines)
+------------------------------------------------------------------------------
+
+Location: src/PriceOracle.sol
+Purpose: Provide token prices in USD (Chainlink-compatible)
+
+FEATURES:
+  - Manual price setting (for testing)
+  - Chainlink aggregator integration (for production)
+  - 8 decimal precision (Chainlink standard)
+
+FUNCTIONS:
+  setManualPrice(token, price, decimals) - Set price manually
+  setChainlinkFeed(token, aggregator)    - Use Chainlink feed
+  getPrice(token)                         - Get price in USD (8 decimals)
+  getValueInUSD(token, amount)            - Get USD value of amount
+
+PRICE FORMAT:
+  - ETH at $2000 = 2000e8 = 200000000000
+  - USDC at $1  = 1e8    = 100000000
+  - Decimals handled automatically
+
+------------------------------------------------------------------------------
+4. WadMath.sol (Library - ~50 lines)
+------------------------------------------------------------------------------
+
+Location: src/libraries/WadMath.sol
+Purpose: Fixed-point arithmetic with 18 decimal precision
+
+CONSTANTS:
+  WAD = 1e18  (18 decimals for most calculations)
+  RAY = 1e27  (27 decimals for interest index)
+
+FUNCTIONS:
+  wadMul(a, b) = (a × b) / 1e18     - Multiply two WAD numbers
+  wadDiv(a, b) = (a × 1e18) / b     - Divide two WAD numbers
+  rayMul(a, b) = (a × b) / 1e27     - Multiply two RAY numbers
+  rayDiv(a, b) = (a × 1e27) / b     - Divide two RAY numbers
+
+EXAMPLE:
+  75% collateral factor = 0.75e18 = 750000000000000000
+  wadMul(10e18, 0.75e18) = 7.5e18  (10 ETH × 75% = 7.5 ETH value)
+
+------------------------------------------------------------------------------
+5. MockERC20.sol (~30 lines)
+------------------------------------------------------------------------------
+
+Location: src/mocks/MockERC20.sol
+Purpose: Test tokens with mint capability
+
+TOKENS DEPLOYED:
+  - MockWETH (mWETH) - 18 decimals - Simulates Wrapped Ether
+  - MockUSDC (mUSDC) - 6 decimals  - Simulates USD Coin
+  - MockDAI  (mDAI)  - 18 decimals - Simulates DAI stablecoin
+
+================================================================================
+                              PROTOCOL FLOW
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           USER JOURNEY EXAMPLE                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Alice wants to borrow USDC using ETH as collateral:
+
+STEP 1: SUPPLY COLLATERAL
+─────────────────────────
+  Alice: supply(WETH, 10 ETH)
+    │
+    ├── Transfer 10 WETH from Alice to LendingPool
+    ├── Mint 10 supply shares to Alice
+    ├── Auto-enable WETH as collateral
+    └── Update market.totalSupply += 10 ETH
+
+  Result: Alice has 10 ETH supplied, earning interest
+
+STEP 2: CHECK BORROWING POWER
+────────────────────────────
+  getAccountLiquidity(Alice)
+    │
+    ├── Collateral Value = 10 ETH × $2000 × 75% = $15,000
+    └── Max Borrow = $15,000 worth of any asset
+
+STEP 3: BORROW
+─────────────
+  Alice: borrow(USDC, 5000 USDC)
+    │
+    ├── Check: $5000 < $15,000 max? YES
+    ├── Check: Pool has 5000 USDC? YES
+    ├── Update Alice.borrowed = 5000
+    ├── Update market.totalBorrows += 5000
+    └── Transfer 5000 USDC to Alice
+
+  Result: Alice has 5000 USDC, owes 5000 USDC (growing with interest)
+
+STEP 4: CHECK HEALTH
+───────────────────
+  getHealthFactor(Alice)
+    │
+    ├── Collateral = 10 ETH × $2000 × 80% threshold = $16,000
+    ├── Debt = $5,000
+    └── Health Factor = $16,000 / $5,000 = 3.2
+
+  Result: Health Factor = 3.2 (Safe! Above 1.0)
+
+STEP 5: TIME PASSES (Interest Accrues)
+─────────────────────────────────────
+  After 30 days at 10% APY:
+    │
+    ├── Interest = 5000 × 10% × (30/365) = ~41 USDC
+    └── New debt = 5041 USDC
+
+STEP 6: REPAY
+────────────
+  Alice: repay(USDC, 5041 USDC)
+    │
+    ├── Transfer 5041 USDC from Alice to Pool
+    ├── Update Alice.borrowed = 0
+    └── Update market.totalBorrows -= 5041
+
+  Result: Debt cleared!
+
+STEP 7: WITHDRAW
+───────────────
+  Alice: withdraw(WETH, 10 ETH)
+    │
+    ├── Check health factor still OK? YES (no debt)
+    ├── Burn supply shares
+    └── Transfer 10 ETH back to Alice
+
+  Result: Alice exits with original 10 ETH (+ any interest earned)
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         LIQUIDATION SCENARIO                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+ETH price drops from $2000 to $1000:
+
+BEFORE CRASH:
+  Alice: 10 ETH collateral ($20,000), 5000 USDC debt
+  Health = ($20,000 × 80%) / $5,000 = 3.2 ✓ Safe
+
+AFTER CRASH:
+  Alice: 10 ETH collateral ($10,000), 5000 USDC debt
+  Health = ($10,000 × 80%) / $5,000 = 1.6 ✓ Still Safe
+
+FURTHER CRASH TO $600:
+  Alice: 10 ETH collateral ($6,000), 5000 USDC debt
+  Health = ($6,000 × 80%) / $5,000 = 0.96 ✗ LIQUIDATABLE!
+
+LIQUIDATION PROCESS:
+  Bob: liquidate(Alice, WETH, USDC, 2500 USDC)
+    │
+    ├── Check health < 1? YES (0.96)
+    ├── Check repay ≤ 50% of debt? YES (2500 ≤ 2500)
+    ├── Calculate seize: $2500 × 1.05 bonus = $2625 worth of ETH
+    ├── At $600/ETH = 4.375 ETH seized
+    ├── Transfer 2500 USDC from Bob to Pool
+    ├── Transfer 4.375 ETH from Alice to Bob
+    └── Alice's debt reduced by 2500 USDC
+
+  Result:
+    - Bob paid 2500 USDC, received 4.375 ETH ($2625) = $125 profit
+    - Alice lost 4.375 ETH but debt reduced by 2500 USDC
+    - Protocol is safer (less bad debt risk)
+
+================================================================================
+                              SECURITY FEATURES
+================================================================================
+
+1. REENTRANCY PROTECTION
+   - All external functions use `nonReentrant` modifier
+   - State changes happen before external calls (CEI pattern)
+
+2. ACCESS CONTROL
+   - `onlyOwner` on admin functions (listMarket, pause, withdrawReserves)
+   - Users can only modify their own positions
+
+3. PAUSABILITY
+   - Owner can pause() in emergencies
+   - Blocks supply, withdraw, borrow, repay, liquidate
+   - Allows users to still check balances
+
+4. HEALTH FACTOR CHECKS
+   - Borrow: Reverts if would make position unhealthy
+   - Withdraw: Reverts if would make position unhealthy
+   - Liquidate: Only works if health < 1.0
+
+5. INPUT VALIDATION
+   - Zero amount checks
+   - Market listed checks
+   - Sufficient balance checks
+   - Close factor limits on liquidation
+
+6. OVERFLOW PROTECTION
+   - Solidity 0.8+ built-in overflow checks
+   - SafeERC20 for token transfers
+
+================================================================================
+                           HOW TO RUN THE PROJECT
+================================================================================
+
+PREREQUISITES:
+  - Git
+  - Foundry (curl -L https://foundry.paradigm.xyz | bash && foundryup)
+
+CLONE & SETUP:
+  git clone https://github.com/yourusername/defi-lending-protocol.git
+  cd defi-lending-protocol
+  forge install
+
+BUILD:
+  forge build
+
+RUN TESTS:
+  # All tests
+  forge test
+
+  # Verbose output
+  forge test -vvv
+
+  # Specific test
+  forge test --match-test test_Supply -vvv
+
+  # Gas report
+  forge test --gas-report
+
+TEST COVERAGE:
+  forge coverage
+
+LOCAL DEPLOYMENT (Anvil):
+  # Terminal 1: Start local blockchain
+  anvil
+
+  # Terminal 2: Deploy
+  forge script script/Deploy.s.sol:DeployScript \
+    --rpc-url http://localhost:8545 \
+    --broadcast
+
+TESTNET DEPLOYMENT (Sepolia):
+  export PRIVATE_KEY=0xyour_private_key
+  forge script script/Deploy.s.sol:DeployScript \
+    --rpc-url https://ethereum-sepolia-rpc.publicnode.com \
+    --broadcast
+
+INTERACT WITH DEPLOYED CONTRACTS:
+  # Check balance
+  cast call 0x211e6A6d182dE6Bcc3C49b876Cb159E235017f80 \
+    "getSupplyBalance(address,address)(uint256)" \
+    YOUR_ADDRESS TOKEN_ADDRESS \
+    --rpc-url https://ethereum-sepolia-rpc.publicnode.com
+
+================================================================================
+                           DEPLOYED CONTRACTS (SEPOLIA)
+================================================================================
+
+Network: Sepolia Testnet (Chain ID: 11155111)
+Deployed: December 28, 2024
+Deployer: 0xFe954F5a96196c8d2E7485aFB532F731Aac05119
+
+┌───────────────────┬──────────────────────────────────────────────┐
+│ Contract          │ Address                                      │
+├───────────────────┼──────────────────────────────────────────────┤
+│ LendingPool       │ 0x211e6A6d182dE6Bcc3C49b876Cb159E235017f80   │
+│ InterestRateModel │ 0xb1193931CD5B5a0c946FF4b18596613be8adaEeE   │
+│ PriceOracle       │ 0x6d3f27e9fDd5e573249B8aa681fCb77Fc7441261   │
+│ MockWETH          │ 0x89F25acfc515C455FE706F679a5b5e1eFe0a17AE   │
+│ MockUSDC          │ 0x2aAbe289c94B80d29DbD0662619eB11E806279a9   │
+│ MockDAI           │ 0xB2B6DFF95aa6B07c178AA7E6600331Ef9167eB20   │
+└───────────────────┴──────────────────────────────────────────────┘
+
+Etherscan Links:
+  LendingPool: https://sepolia.etherscan.io/address/0x211e6A6d182dE6Bcc3C49b876Cb159E235017f80
+  Supply TX:   https://sepolia.etherscan.io/tx/0xe10ddb4e737307efae934efc1dbbc233812a17d598289aee97fcb5b617c69b96
+
+================================================================================
+                              TEST RESULTS PROOF
+================================================================================
+
+$ forge test
+
+Ran 8 tests for test/LendingPool.fuzz.t.sol:LendingPoolFuzzTest
+[PASS] testFuzz_BorrowWithinLimits(uint256,uint256) (runs: 1000)
+[PASS] testFuzz_HealthFactor(uint256,uint256) (runs: 1000)
+[PASS] testFuzz_InterestAccrual(uint256) (runs: 1000)
+[PASS] testFuzz_MultipleUsers(uint256,uint256) (runs: 1000)
+[PASS] testFuzz_PriceChange(uint256) (runs: 1000)
+[PASS] testFuzz_Repay(uint256,uint256) (runs: 1000)
+[PASS] testFuzz_Supply(uint256) (runs: 1000)
+[PASS] testFuzz_SupplyAndWithdraw(uint256,uint256) (runs: 1000)
+Suite result: ok. 8 passed; 0 failed
+
+Ran 29 tests for test/LendingPool.t.sol:LendingPoolTest
+[PASS] test_Borrow()
+[PASS] test_Borrow_MaxAmount()
+[PASS] test_Borrow_RevertIfInsufficientCollateral()
+[PASS] test_Borrow_RevertIfInsufficientLiquidity()
+[PASS] test_DisableCollateral()
+[PASS] test_DisableCollateral_RevertIfNeeded()
+[PASS] test_GetAllMarkets()
+[PASS] test_GetUserMarkets()
+[PASS] test_GetUtilizationRate()
+[PASS] test_HealthFactor_NoDebt()
+[PASS] test_HealthFactor_WithDebt()
+[PASS] test_InterestAccrual()
+[PASS] test_Liquidation()
+[PASS] test_Liquidation_RevertIfExceedsCloseFactor()
+[PASS] test_Liquidation_RevertIfHealthy()
+[PASS] test_Liquidation_RevertIfSelfLiquidation()
+[PASS] test_Pause()
+[PASS] test_Repay()
+[PASS] test_Repay_Full()
+[PASS] test_Repay_MoreThanOwed()
+[PASS] test_Supply()
+[PASS] test_Supply_MultipleTokens()
+[PASS] test_Supply_RevertIfMarketNotListed()
+[PASS] test_Supply_RevertIfZeroAmount()
+[PASS] test_Unpause()
+[PASS] test_Withdraw()
+[PASS] test_WithdrawReserves()
+[PASS] test_Withdraw_Full()
+[PASS] test_Withdraw_RevertIfInsufficientBalance()
+Suite result: ok. 29 passed; 0 failed
+
+Ran 2 tests for test/LendingPool.fuzz.t.sol:LendingPoolInvariantTest
+[PASS] invariant_PoolSolvency() (runs: 256, calls: 32768, reverts: 0)
+[PASS] invariant_UtilizationBounded() (runs: 256, calls: 32768, reverts: 0)
+Suite result: ok. 2 passed; 0 failed
+
+═══════════════════════════════════════════════════════════════════════════════
+                    TOTAL: 39 tests passed, 0 failed
+═══════════════════════════════════════════════════════════════════════════════
+
+Test Breakdown:
+  - Unit Tests:      29 (basic functionality)
+  - Fuzz Tests:       8 (random inputs, 1000 runs each)
+  - Invariant Tests:  2 (protocol guarantees, 32768 operations each)
+
+================================================================================
+                              SKILLS DEMONSTRATED
+================================================================================
+
+For Recruiters - This project demonstrates:
+
+1. SMART CONTRACT DEVELOPMENT
+   - Complex multi-contract architecture
+   - Interface-driven design
+   - Library usage
+   - Proper Solidity patterns
+
+2. DEFI KNOWLEDGE
+   - Lending/borrowing mechanics
+   - Interest rate models
+   - Collateralization and liquidation
+   - Price oracle integration
+
+3. SECURITY BEST PRACTICES
+   - Reentrancy protection
+   - Access control
+   - Emergency mechanisms
+   - Input validation
+
+4. TESTING EXPERTISE
+   - Unit testing
+   - Fuzz testing (property-based)
+   - Invariant testing
+   - 100% critical path coverage
+
+5. DEVOPS/TOOLING
+   - Foundry framework mastery
+   - CI/CD with GitHub Actions
+   - Multi-network deployment
+   - Gas optimization awareness
+
+6. DOCUMENTATION
+   - Clear code comments
+   - Comprehensive README
+   - Architecture documentation
+
+================================================================================
+                                  END
+================================================================================
