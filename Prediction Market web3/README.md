@@ -372,3 +372,72 @@ Buy YES at $0.40
 If YES wins → Get $1.00 → Profit = $0.60
 If NO wins → Get $0.00 → Loss = $0.40
 ```
+
+---
+
+## Revenue Models
+
+| Category | Revenue Source | Typical Range |
+|----------|----------------|---------------|
+| **Prediction Platforms** | Trading fees, market creation fees | 1-2% per trade |
+| **Sports Betting** | Vigorish (vig), spreads | 2-10% margin |
+| **Binary Options** | Spread between buy/sell | 2-5% spread |
+| **Prediction Market Bots** | Subscription, % of profits | $50-500/month or 1-5% profits |
+| **Oracle Data Integration** | Data feed fees, resolution fees | $0.01-1 per resolution |
+| **Liquidity Protocols** | LP fees, protocol fees | 0.1-0.5% per swap |
+
+### Detailed Breakdown:
+
+**Prediction Platforms (Polymarket model):**
+```
+Revenue Streams:
+├── Trading fees: 1-2% on every trade
+├── Market creation fees: $10-100 per market
+├── Liquidity provider spreads
+└── USDC float interest (on deposits)
+
+Example: Polymarket
+├── 2% fee on $10M daily volume = $200,000/day
+├── Thousands of active markets
+└── Estimated $50M+ annual revenue
+```
+
+**Sports Betting (Overtime/Azuro model):**
+```
+Revenue Streams:
+├── Vigorish (vig): Built into odds
+├── Spread: Difference between true odds and offered odds
+└── Parlay margins: Higher margins on combo bets
+
+Example:
+├── True odds: 50/50 (2.00)
+├── Offered odds: 1.91 / 1.91
+└── House edge: ~4.5% per bet
+```
+
+**Oracle Integration (UMA model):**
+```
+Revenue Streams:
+├── Resolution fees: Paid by market creators
+├── Bond economics: Disputors stake tokens
+├── Protocol token value appreciation
+└── Integration fees from platforms
+
+Example: UMA Oracle
+├── $0.01-1 per market resolution
+├── Bond requirements create demand for UMA token
+└── B2B integrations with prediction platforms
+```
+
+**Liquidity Protocols (FPMM model):**
+```
+Revenue Streams:
+├── Swap fees: 0.1-0.5% per trade
+├── Protocol fee: % of LP fees
+└── Token incentives/governance value
+
+Example:
+├── LP deposits $100K in YES/NO pool
+├── Earns 0.3% on all swaps
+├── Protocol takes 10% of LP fees
+```
