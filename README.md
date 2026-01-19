@@ -238,6 +238,28 @@ web3-projects/
 
 ---
 
+## Web3 Revenue Models
+
+| Category | Project Type | Revenue Source | Typical Range |
+|----------|--------------|----------------|---------------|
+| **DeFi - Lending** | Aave, Compound clones | Interest spread, liquidation fees | 0.1-1% spread |
+| **DeFi - DEX/AMM** | Uniswap, Raydium clones | Swap fees | 0.1-0.3% per swap |
+| **DeFi - Aggregators** | 0x, 1inch clones | Positive slippage, referral fees | 0.1-0.5% |
+| **Bridges** | Cross-chain bridges | Bridge fees | 0.1-0.5% per transfer |
+| **MEV/Trading Bots** | Sniper, arbitrage bots | Trading profits | Variable |
+| **Token Launchpads** | pump.fun clones | Launch fees, trading fees | 1-2% per trade |
+| **NFT Marketplaces** | OpenSea clones | Marketplace fees | 2-5% per sale |
+| **Gaming Guilds** | YGG clones | Profit share from scholars | 20-40% of earnings |
+| **P2E Games** | Axie clones | NFT sales, marketplace fees | Variable |
+| **Move-to-Earn** | StepN clones | NFT sales, premium features | $50-500 per NFT |
+| **Casino/Gambling** | Rollbit clones | House edge | 1-5% edge |
+| **Prediction Markets** | Polymarket clones | Trading fees, resolution fees | 1-2% |
+| **Security Tools** | Auditors, analyzers | SaaS subscription, per-audit fees | $500-50K per audit |
+| **Oracles** | Chainlink tools | Data feed subscriptions | Usage-based |
+| **Infrastructure** | SDKs, APIs | SaaS fees, usage fees | $99-999/month |
+
+---
+
 ## License
 
 Each project may have its own license. See individual project directories for details.
