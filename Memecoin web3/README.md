@@ -472,3 +472,50 @@ This structure works across all chains:
 | **Base** | ape.store | Uniswap | Maestro |
 | **Ethereum** | Various | Uniswap | Banana Gun |
 | **BSC** | four.meme | PancakeSwap | Various |
+
+---
+
+## Revenue Models
+
+| Category | Revenue Source | Typical Range |
+|----------|----------------|---------------|
+| **Token Launchpads** | Token creation fee, trading fees on bonding curve | 1-2% per trade |
+| **Trading Bots** | Subscription fees, % of profits, referral fees | $50-500/month or 1% of profits |
+| **Analytics Tools** | Freemium subscriptions, API access fees | $20-200/month |
+| **Token Generators** | Per-token creation fee | $0.1-2 SOL per token |
+| **Marketing Tools** | Subscription, per-airdrop fees | $50-500/campaign |
+
+### Detailed Breakdown:
+
+**Token Launchpads (pump.fun model):**
+```
+Revenue Streams:
+├── Trading fee: 1% on every buy/sell
+├── Graduation fee: When token moves to DEX
+└── Featured listings: Premium placement
+
+Example: pump.fun
+├── 1% fee on $1M daily volume = $10,000/day
+└── ~$300K/month revenue
+```
+
+**Trading Bots (BonkBot model):**
+```
+Revenue Streams:
+├── Transaction fee: 0.5-1% per trade
+├── Premium subscription: $50-200/month
+└── Referral commissions: 30% of fees
+
+Example: BonkBot
+├── 1% on $500K daily volume = $5,000/day
+└── Premium users: 1000 × $100 = $100K/month
+```
+
+**Analytics Tools (DEXScreener model):**
+```
+Revenue Streams:
+├── Ads/Promoted tokens: $500-5000/day
+├── API access: $99-999/month
+├── Premium features: $20-50/month
+└── Token verification: $200-500 one-time
+```
